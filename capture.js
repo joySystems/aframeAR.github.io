@@ -18,6 +18,7 @@
     var canvas = null;
     var photo = null;
     var startbutton = null;
+    var count = 0;
   
     function startup() {
       video = document.getElementById('video');
@@ -59,6 +60,9 @@
       }, false);
       
       clearphoto();
+
+      canvas.addEventListener('click', drawPath, false);
+      canvas.addEventListener('touchstart', drawPath, false);
     }
   
     // Fill the photo with an indication that none has been
@@ -86,14 +90,59 @@
         canvas.height = height;
         context.drawImage(video, 0, 0, width, height);
       
-        var data = canvas.toDataURL('image/png');
-        photo.setAttribute('src', data);
+        // var data = canvas.toDataURL('image/png');
+        // photo.setAttribute('src', data);
       } else {
         clearphoto();
       }
     }
   
+function drawPath (e) {
+  var c = canvas.getContext('2d');
+  var bound = canvas.getBoundingClientRect();
+  
+
+  //var x = e.clientX - bound.left - canvas.clientLeft;
+  //var y = e.clientY - bound.top - canvas.clientTop;
+
+  var x = e.clientX - bound.left;
+  var y = e.clientY - bound.top;
+
+  //var x = e.clientX - bound.left - scrollX;
+  //var y = e.clientY - bound.top - scrollY;
+
+  count++;
+
+  console.log(count);
+
+ if (count == 1) {
+  c.strokeStyle = 'red';
+  c.beginPath();
+  c.moveTo(x, y);
+  
+ } else if (count == 2 || count == 3) {
+
+    c.lineTo(x, y);
+   
+ } else {
+  c.lineTo(x, y);
+ c.closePath();
+ count = 0;
+ 
+ c.stroke();
+ }
+
+ 
+
+
+console.log(x, y);
+
+}
+
     // Set up our event listener to run the startup process
     // once loading is complete.
     window.addEventListener('load', startup, false);
+
+
+    
   })();
