@@ -59,38 +59,48 @@
       visibility: visible;
     }
 
+    body {
+			padding-top: 20px;
+			padding-bottom: 20px;
+		}
+
 
 
     #video {
       border: 1px solid black;
       box-shadow: 2px 2px 3px black;
-      width:320px;
-      height:240px;
+      width:100%;
+      height:auto;
+    }
+
+    .hidden{
+      display: none;
     }
     
     #photo {
 
-      display:none;
+      
       border: 1px solid black;
       box-shadow: 2px 2px 3px black;
-      width:320px;
-      height:240px;
+      width:100%;
+      height:auto;
     }
     
     #canvas {
       border: 1px solid black;
       box-shadow: 2px 2px 3px black;
-      width:320px;
-      height:240px;
+      width:100%;
+      height:auto;
+      box-sizing: border-box;
     }
     
     .camera {
-      width: 340px;
+      width: 100%;
       display:inline-block;
     }
     
     .output {
-      width: 340px;
+      width: 100%;
       display:inline-block;
     }
     
@@ -111,5 +121,5 @@
     .contentarea {
       font-size: 16px;
       font-family: "Lucida Grande", "Arial", sans-serif;
-      width: 760px;
+      width: 100%;
     }

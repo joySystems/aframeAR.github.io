@@ -3,7 +3,7 @@
     // width to the value defined here, but the height will be
     // calculated based on the aspect ratio of the input stream.
   
-    var width = 320;    // We will scale the photo width to this
+    var width = window.innerWidth;    // We will scale the photo width to this
     var height = 0;     // This will be computed based on the input stream
   
     // |streaming| indicates whether or not we're currently streaming
@@ -43,7 +43,7 @@
           // the video, so we will make assumptions if this happens.
         
           if (isNaN(height)) {
-            height = width / (4/3);
+            height = width / (16/9);
           }
         
           video.setAttribute('width', width);
@@ -89,7 +89,8 @@
         canvas.width = width;
         canvas.height = height;
         context.drawImage(video, 0, 0, width, height);
-      
+        video.classList.add('hidden');
+      canvas.classList.remove('hidden');
         // var data = canvas.toDataURL('image/png');
         // photo.setAttribute('src', data);
       } else {
@@ -107,7 +108,8 @@ function drawPath (e) {
 
   var x = e.clientX - bound.left;
   var y = e.clientY - bound.top;
-
+  console.log(x);
+  console.log(y);
   //var x = e.clientX - bound.left - scrollX;
   //var y = e.clientY - bound.top - scrollY;
 

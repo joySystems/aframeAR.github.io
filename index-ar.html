@@ -13,7 +13,9 @@
 </head>
 <body style='margin : 0px; overflow: hidden;'>
     <a-scene embedded arjs='sourceType: webcam;'>
-
+      <a-assets>
+        <a-asset-item id="burg" src="/obj/111.glb"></a-asset-item>
+      </a-assets>
         <!-- <a-assets>
             <a-asset-item id="test-obj" src="test.obj"></a-asset-item>
             <a-asset-item id="test-mtl" src="test.mtl"></a-asset-item>
@@ -26,8 +28,7 @@
           </a-entity> -->
 
           <a-entity scale="0.1 0.1 0.1" rotation="0 0 0" position="0 0 0"
-              obj-model="obj: url(obj/burger_low_ready.obj); 
-              mtl: url(obj/burger_low_ready.mtl)">
+          gltf-model="#burg">
           </a-entity>
           <!-- <a-entity geometry="primitive: cylinder"
           material="src: url(obj5/09_edited_decimated_2k0.6EV2.jpg); color: #fff; roughness: 1; metalness: 0">
