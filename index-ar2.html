@@ -6,40 +6,64 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>aframe-test</title>
 
-    <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
+    <!-- <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script> -->
+    <script src="https://cdn.jsdelivr.net/gh/aframevr/aframe@1c2407b26c61958baa93967b5412487cd94b290b/dist/aframe-master.min.js"></script>
     <script src="https://jeromeetienne.github.io/AR.js/aframe/build/aframe-ar.js"></script>
     <script src="https://rawgit.com/donmccurdy/aframe-extras/master/dist/aframe-extras.loaders.min.js"></script>
+    
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
 
+    <style>
+      .arjs-loader {
+        height: 100%;
+        width: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        background-color: rgba(0, 0, 0, 0.8);
+        z-index: 9999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+    
+      .arjs-loader div {
+        text-align: center;
+        font-size: 1.25em;
+        color: white;
+      }
+    </style>
 </head>
 <body style='margin : 0px; overflow: hidden;'>
-    <a-scene embedded arjs='sourceType: webcam;'>
+  <div class="arjs-loader">
+    <div>Loading, please wait...</div>
+  </div>
+    <a-scene vr-mode-ui="enabled: false;"
+    renderer="logarithmicDepthBuffer: true; precision: medium;"
+    embedded
+    arjs="trackingMethod: best; sourceType: webcam;debugUIEnabled: false;">
+    
 
-        <a-assets>
-            <a-asset-item id="test" src="obj/2222.glb"></a-asset-item>
-           
-          </a-assets>
-        <a-marker preset='hiro'>
-          <!-- Adding an OBJ file to an AR Project-->
-          <!-- <a-entity scale="0.9 0.9 0.9" rotation="-15 0 0" position="0 0 5"
-              obj-model="obj: url(obj5/09_edited_decimated_2k0.6EV2.obj); 
-              mtl: url(obj5/09_edited_decimated_2k0.6EV2.mtl)">
-          </a-entity> -->
+    <a-assets>
+      <a-asset-item id="test" src="obj/2222.glb"></a-asset-item>
+     
+    </a-assets>
+    <a-nft
+    type="nft"
+    url="vagon/vagon"
+    smooth="true"
+    smoothCount="10"
+    smoothTolerance=".01"
+    smoothThreshold="5"
+  >
 
-          <!-- <a-entity scale="0.1 0.1 0.1" rotation="0 0 0" position="0 0 0"
-              obj-model="obj: url(obj/burger_low_ready.obj); 
-              mtl: url(obj/burger_low_ready.mtl)">
-          </a-entity> -->
-          <!-- <a-entity geometry="primitive: cylinder"
-          material="src: url(obj5/09_edited_decimated_2k0.6EV2.jpg); color: #fff; roughness: 1; metalness: 0">
-            </a-entity> -->
-            <!-- <a-entity scale="0.1 0.1 0.1" rotation="0 0 0" animation="property: rotation; to: 0 360 0; loop: true; dur: 10000"
-            gltf-model="#test">
-            </a-entity> -->
+        
+        
 
             <a-entity scale="0.3 0.3 0.3" rotation="-90 0 0" position="0 -1 -1"
             gltf-model="#test">
             </a-entity>
-        </a-marker>
+          </a-nft>
     <a-entity camera>
     </a-entity>
     </a-scene>
