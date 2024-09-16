@@ -1,129 +1,151 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Model Viewer</title>
-    <script src="https://unpkg.com/@google/model-viewer/dist/model-viewer.js"></script>
-    <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            font-family: Arial, sans-serif;
-        }
-        #model-viewer-container {
-            position: relative;
-            width: 100%;
-            height: 100vh;
-        }
-        #description {
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: white;
-            font-size: 18px;
-            text-shadow: 1px 1px 2px black;
-        }
-        #controls {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 10px;
-        }
-        .control-button {
-            background: rgba(0, 0, 0, 0.5);
-            border: none;
-            color: white;
-            padding: 10px;
-            font-size: 18px;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        .control-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AR Model Viewer</title>
+  <script type="module" src="script.js"></script>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #ar-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    #info {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: white;
+      background-color: rgba(0, 0, 0, 0.6);
+      padding: 10px;
+      border-radius: 5px;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      z-index: 10;
+    }
+
+    #controls {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      z-index: 10;
+    }
+
+    button {
+      padding: 10px;
+      background-color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    button:hover {
+      background-color: lightgray;
+    }
+
+    model-viewer {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      z-index: 1;
+    }
+  </style>
 </head>
 <body>
-    <div id="model-viewer-container">
-        <model-viewer id="model-viewer" 
-                      src="" 
-                      alt="3D Model" 
-                      auto-rotate 
-                      camera-controls 
-                      ar
-                      style="width: 100%; height: 100%;">
-        </model-viewer>
-        <div id="description">
-            <div id="model-name">Model Name</div>
-            <div id="model-description">Model Description</div>
-        </div>
-        <div id="controls">
-            <button class="control-button" id="prev-btn">&#9664;</button>
-            <button class="control-button" id="next-btn">&#9654;</button>
-        </div>
+  <div id="ar-container">
+    <!-- AR Info Block -->
+    <div id="info">
+      <h1 id="model-name">Модель 1</h1>
+      <p id="model-description">Описание модели 1</p>
     </div>
-    <script>
-           
-        const models = [
-            {
-                src: 'obj/111.glb',
-                name: 'Model 1',
-                description: 'Description of Model 1'
-            },
-            {
-                src: 'obj/2222.glb',
-                name: 'Model 2',
-                description: 'Description of Model 2'
-            },
-{
-                src: 'obj/444.glb',
-                name: 'Model 3',
-                description: 'Description of Model 2'
-            },
-{
-                src: 'obj/4441.glb',
-                name: 'Model 4',
-                description: 'Description of Model 2'
-            },
-            // Add more models as needed
-        ];
 
-        let currentIndex = 0;
+    <!-- Model Viewer for AR -->
+    <model-viewer id="ar-viewer" 
+      ar 
+      ar-modes="webxr scene-viewer quick-look"
+      camera-controls
+      touch-action="pan-y"
+      src="./obj/2222.glb"
+      alt="3D модель"
+      shadow-intensity="1"
+      auto-rotate
+      ar-placement="floor"
+      environment-image="neutral"
+      ios-src="./models/model1.usdz">
+    </model-viewer>
 
-        const modelViewer = document.getElementById('model-viewer');
-        const modelName = document.getElementById('model-name');
-        const modelDescription = document.getElementById('model-description');
-        const prevBtn = document.getElementById('prev-btn');
-        const nextBtn = document.getElementById('next-btn');
+    <!-- Controls -->
+    <div id="controls">
+      <button id="prev-model">⬅️</button>
+      <button id="next-model">➡️</button>
+    </div>
+  </div>
+<script>
+const models = [
+  {
+    name: 'Модель 1',
+    description: 'Описание модели 1',
+    glbSrc: './obj/2222.glb',
+    usdzSrc: './models/model1.usdz'
+  },
+  {
+    name: 'Модель 2',
+    description: 'Описание модели 2',
+    glbSrc: './obj/444.glb',
+    usdzSrc: './models/model2.usdz'
+  },
+  {
+    name: 'Модель 3',
+    description: 'Описание модели 3',
+    glbSrc: './obj/4441.glb',
+    usdzSrc: './models/model3.usdz'
+  }
+];
 
-        function updateModel() {
-            const model = models[currentIndex];
-            modelViewer.src = model.src;
-            modelName.textContent = model.name;
-            modelDescription.textContent = model.description;
-        }
+let currentIndex = 0;
 
-        prevBtn.addEventListener('click', () => {
-            if (currentIndex > 0) {
-                currentIndex--;
-                updateModel();
-            }
-        });
+// Обновление информации и модели
+function updateModel() {
+  const modelViewer = document.querySelector('#ar-viewer');
+  const modelName = document.querySelector('#model-name');
+  const modelDescription = document.querySelector('#model-description');
 
-        nextBtn.addEventListener('click', () => {
-            if (currentIndex < models.length - 1) {
-                currentIndex++;
-                updateModel();
-            }
-        });
+  modelName.textContent = models[currentIndex].name;
+  modelDescription.textContent = models[currentIndex].description;
+  modelViewer.setAttribute('src', models[currentIndex].glbSrc);
+  modelViewer.setAttribute('ios-src', models[currentIndex].usdzSrc);
+}
 
-        // Initialize the first model
-        updateModel();
-    </script>
+// Кнопка "влево"
+document.querySelector('#prev-model').addEventListener('click', () => {
+  currentIndex = (currentIndex - 1 + models.length) % models.length;
+  updateModel();
+});
+
+// Кнопка "вправо"
+document.querySelector('#next-model').addEventListener('click', () => {
+  currentIndex = (currentIndex + 1) % models.length;
+  updateModel();
+});
+
+// Инициализация модели
+updateModel();
+</script>
 </body>
 </html>
