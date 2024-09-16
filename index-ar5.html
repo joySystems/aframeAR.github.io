@@ -7,6 +7,7 @@
  <!-- Import the component -->
 <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
 
+
   <style>
     body, html {
       margin: 0;
@@ -95,6 +96,11 @@
       z-index: 10;
       display: none;
     }
+
+    /* Переключение для режима AR */
+    .ar-active #info, .ar-active #controls, .ar-active #loading-progress, .ar-active #debug {
+      display: block !important;
+    }
   </style>
 </head>
 <body>
@@ -146,8 +152,8 @@ const models = [
   {
     name: 'Модель 2',
     description: 'Описание модели 2',
-    glbSrc: './obj/444.glb',
-    usdzSrc: './obj/444.usdz'
+    glbSrc: './obj/111.glb',
+    usdzSrc: './obj/111.usdz'
   },
   {
     name: 'Модель 3',
@@ -202,6 +208,15 @@ modelViewer.addEventListener('error', (event) => {
   debugInfo.style.display = 'block';
   debugInfo.textContent = `Ошибка: ${event.detail.message}`;
   loadingProgress.style.display = 'none';
+});
+
+// Отслеживание активации AR режима
+modelViewer.addEventListener('ar-status', (event) => {
+  if (event.detail.status === 'session-started') {
+    document.body.classList.add('ar-active');
+  } else if (event.detail.status === 'session-ended') {
+    document.body.classList.remove('ar-active');
+  }
 });
 
 // Инициализация первой модели
