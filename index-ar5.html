@@ -65,6 +65,34 @@
       position: absolute;
       z-index: 1;
     }
+
+    #loading-progress {
+      position: absolute;
+      bottom: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: white;
+      background-color: rgba(0, 0, 0, 0.6);
+      padding: 10px;
+      border-radius: 5px;
+      font-family: Arial, sans-serif;
+      z-index: 10;
+      display: none;
+    }
+
+    #debug {
+      position: absolute;
+      top: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: red;
+      background-color: rgba(0, 0, 0, 0.6);
+      padding: 10px;
+      border-radius: 5px;
+      font-family: Arial, sans-serif;
+      z-index: 10;
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -87,7 +115,9 @@
       auto-rotate
       ar-placement="floor"
       environment-image="neutral"
-      ios-src="./models/model1.usdz">
+      ios-src="./obj/2222.usdz"
+      on-load="handleLoad()"
+      on-error="handleError(event)">
     </model-viewer>
 
     <!-- Controls -->
@@ -95,37 +125,47 @@
       <button id="prev-model">⬅️</button>
       <button id="next-model">➡️</button>
     </div>
+
+    <!-- Loading progress -->
+    <div id="loading-progress">Загрузка: 0%</div>
+
+    <!-- Debug info -->
+    <div id="debug">Ошибка: </div>
   </div>
+
 <script>
 const models = [
   {
     name: 'Модель 1',
     description: 'Описание модели 1',
     glbSrc: './obj/2222.glb',
-    usdzSrc: './models/model1.usdz'
+    usdzSrc: './obj/2222.usdz'
   },
   {
     name: 'Модель 2',
     description: 'Описание модели 2',
     glbSrc: './obj/444.glb',
-    usdzSrc: './models/model2.usdz'
+    usdzSrc: './obj/444.usdz'
   },
   {
     name: 'Модель 3',
     description: 'Описание модели 3',
     glbSrc: './obj/4441.glb',
-    usdzSrc: './models/model3.usdz'
+    usdzSrc: './obj/4441.usdz'
   }
 ];
 
 let currentIndex = 0;
+const modelViewer = document.querySelector('#ar-viewer');
+const modelName = document.querySelector('#model-name');
+const modelDescription = document.querySelector('#model-description');
+const loadingProgress = document.querySelector('#loading-progress');
+const debugInfo = document.querySelector('#debug');
 
 // Обновление информации и модели
 function updateModel() {
-  const modelViewer = document.querySelector('#ar-viewer');
-  const modelName = document.querySelector('#model-name');
-  const modelDescription = document.querySelector('#model-description');
-
+  loadingProgress.style.display = 'block';
+  debugInfo.style.display = 'none';
   modelName.textContent = models[currentIndex].name;
   modelDescription.textContent = models[currentIndex].description;
   modelViewer.setAttribute('src', models[currentIndex].glbSrc);
@@ -144,7 +184,25 @@ document.querySelector('#next-model').addEventListener('click', () => {
   updateModel();
 });
 
-// Инициализация модели
+// Отслеживание процесса загрузки
+modelViewer.addEventListener('progress', (event) => {
+  const progress = Math.round(event.detail.totalProgress * 100);
+  loadingProgress.textContent = `Загрузка: ${progress}%`;
+});
+
+// Когда модель загружена
+modelViewer.addEventListener('load', () => {
+  loadingProgress.style.display = 'none';
+});
+
+// Обработка ошибок
+modelViewer.addEventListener('error', (event) => {
+  debugInfo.style.display = 'block';
+  debugInfo.textContent = `Ошибка: ${event.detail.message}`;
+  loadingProgress.style.display = 'none';
+});
+
+// Инициализация первой модели
 updateModel();
 </script>
 </body>
