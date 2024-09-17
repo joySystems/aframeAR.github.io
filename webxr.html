@@ -58,6 +58,18 @@
       padding: 5px;
       font-size: 14px;
     }
+    #startButton {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 20px;
+      font-size: 18px;
+      background-color: blue;
+      color: white;
+      cursor: pointer;
+      border: none;
+    }
   </style>
 </head>
 <body>
@@ -76,6 +88,8 @@
 
 <div id="debug">Debug: Ready</div>
 
+<button id="startButton" onclick="startAR()">Start AR</button>
+
 <script>
   const models = [
     { name: 'Модель 1', description: 'Описание модели 1', glbSrc: './obj/2222.glb', usdzSrc: './obj/2222.usdz' },
@@ -87,6 +101,11 @@
   let scene, camera, renderer, reticle, currentModel, gl, session, referenceSpace, hitTestSource;
 
   document.getElementById("progress").style.display = "none";
+
+  function startAR() {
+    document.getElementById("startButton").style.display = "none";  // Hide the button after the user clicks it
+    activateXR();  // Now activate the XR session after user interaction
+  }
 
   async function activateXR() {
     try {
@@ -212,11 +231,6 @@
 
       renderer.render(scene, camera);
     }
-  };
-
-  // Start XR on button click
-  document.body.onload = () => {
-    activateXR();
   };
 </script>
 
