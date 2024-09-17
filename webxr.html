@@ -1,140 +1,224 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-  <title>Hello WebXR!</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AR Model Viewer</title>
 
   <!-- three.js -->
   <script src="https://unpkg.com/three@0.126.0/build/three.js"></script>
   <script src="https://unpkg.com/three@0.126.0/examples/js/loaders/GLTFLoader.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: sans-serif;
+    }
+    #ui {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.5);
+      color: white;
+      text-align: center;
+      font-size: 20px;
+    }
+    #progress {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 18px;
+    }
+    #controls {
+      position: fixed;
+      bottom: 20px;
+      width: 100%;
+      text-align: center;
+    }
+    button {
+      background: rgba(0, 0, 0, 0.5);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 18px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    #debug {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      background: rgba(255, 0, 0, 0.7);
+      color: white;
+      padding: 5px;
+      font-size: 14px;
+    }
+  </style>
 </head>
 <body>
 
-<!-- Starting an immersive WebXR session requires user interaction.
-    We start this one with a simple button. -->
-<button onclick="activateXR()">Start Hello WebXR</button>
+<div id="ui">
+  <div id="modelName">Model Name</div>
+  <div id="modelDescription">Model Description</div>
+</div>
 
+<div id="progress">Loading...</div>
+
+<div id="controls">
+  <button onclick="previousModel()">← Previous</button>
+  <button onclick="nextModel()">Next →</button>
+</div>
+
+<div id="debug">Debug: Ready</div>
 
 <script>
-async function activateXR() {
-  // Add a canvas element and initialize a WebGL context that is compatible with WebXR.
-  const canvas = document.createElement("canvas");
-  document.body.appendChild(canvas);
-  const gl = canvas.getContext("webgl", {xrCompatible: true});
+  const models = [
+    { name: 'Модель 1', description: 'Описание модели 1', glbSrc: './obj/2222.glb', usdzSrc: './obj/2222.usdz' },
+    { name: 'Модель 2', description: 'Описание модели 2', glbSrc: './obj/444.glb', usdzSrc: './obj/444.usdz' },
+    { name: 'Модель 3', description: 'Описание модели 3', glbSrc: './obj/4441.glb', usdzSrc: './obj/4441.usdz' }
+  ];
 
-  // To be continued in upcoming steps.
+  let currentModelIndex = 0;
+  let scene, camera, renderer, reticle, currentModel, gl, session, referenceSpace, hitTestSource;
 
-  const scene = new THREE.Scene();
+  document.getElementById("progress").style.display = "none";
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 0.3);
-directionalLight.position.set(10, 15, 10);
-scene.add(directionalLight);
+  async function activateXR() {
+    try {
+      // Add a canvas element and initialize a WebGL context that is compatible with WebXR.
+      const canvas = document.createElement("canvas");
+      document.body.appendChild(canvas);
+      gl = canvas.getContext("webgl", {xrCompatible: true});
 
-// Set up the WebGLRenderer, which handles rendering to the session's base layer.
-const renderer = new THREE.WebGLRenderer({
-  alpha: true,
-  preserveDrawingBuffer: true,
-  canvas: canvas,
-  context: gl
-});
-renderer.autoClear = false;
+      scene = new THREE.Scene();
 
-// The API directly updates the camera matrices.
-// Disable matrix auto updates so three.js doesn't attempt
-// to handle the matrices independently.
-const camera = new THREE.PerspectiveCamera();
-camera.matrixAutoUpdate = false;
+      // Add lighting
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+      directionalLight.position.set(10, 15, 10);
+      scene.add(directionalLight);
 
+      // Set up the WebGLRenderer, which handles rendering to the session's base layer.
+      renderer = new THREE.WebGLRenderer({
+        alpha: true,
+        preserveDrawingBuffer: true,
+        canvas: canvas,
+        context: gl
+      });
+      renderer.autoClear = false;
 
-// Initialize a WebXR session using "immersive-ar".
-const session = await navigator.xr.requestSession("immersive-ar", {requiredFeatures: ['hit-test']});
-session.updateRenderState({
-  baseLayer: new XRWebGLLayer(session, gl)
-});
+      // The API directly updates the camera matrices.
+      // Disable matrix auto updates so three.js doesn't attempt to handle the matrices independently.
+      camera = new THREE.PerspectiveCamera();
+      camera.matrixAutoUpdate = false;
 
-// A 'local' reference space has a native origin that is located
-// near the viewer's position at the time the session was created.
-const referenceSpace = await session.requestReferenceSpace('local');
+      // Initialize a WebXR session using "immersive-ar".
+      session = await navigator.xr.requestSession("immersive-ar", {requiredFeatures: ['hit-test']});
+      session.updateRenderState({
+        baseLayer: new XRWebGLLayer(session, gl)
+      });
 
-// Create another XRReferenceSpace that has the viewer as the origin.
-const viewerSpace = await session.requestReferenceSpace('viewer');
-// Perform hit testing using the viewer as origin.
-const hitTestSource = await session.requestHitTestSource({ space: viewerSpace });
+      referenceSpace = await session.requestReferenceSpace('local');
+      const viewerSpace = await session.requestReferenceSpace('viewer');
+      hitTestSource = await session.requestHitTestSource({ space: viewerSpace });
 
+      // Load the reticle
+      const loader = new THREE.GLTFLoader();
+      loader.load("https://immersive-web.github.io/webxr-samples/media/gltf/reticle/reticle.gltf", function(gltf) {
+        reticle = gltf.scene;
+        reticle.visible = false;
+        scene.add(reticle);
+      });
 
+      // Set initial model
+      loadModel(models[currentModelIndex]);
 
-
-const loader = new THREE.GLTFLoader();
-let reticle;
-loader.load("https://immersive-web.github.io/webxr-samples/media/gltf/reticle/reticle.gltf", function(gltf) {
-  reticle = gltf.scene;
-  reticle.visible = false;
-  scene.add(reticle);
-})
-
-let flower;
-loader.load("https://immersive-web.github.io/webxr-samples/media/gltf/sunflower/sunflower.gltf", function(gltf) {
-  flower = gltf.scene;
-});
-
-
-session.addEventListener("select", (event) => {
-  if (flower) {
-    const clone = flower.clone();
-    clone.position.copy(reticle.position);
-    scene.add(clone);
+      // Create a render loop that allows us to draw on the AR view.
+      session.requestAnimationFrame(onXRFrame);
+    } catch (error) {
+      document.getElementById("debug").textContent = "Debug: " + error.message;
+    }
   }
-});
 
+  function loadModel(model) {
+    const loader = new THREE.GLTFLoader();
+    document.getElementById("progress").style.display = "block";
+    document.getElementById("modelName").textContent = model.name;
+    document.getElementById("modelDescription").textContent = model.description;
 
-
-// Create a render loop that allows us to draw on the AR view.
-const onXRFrame = (time, frame) => {
-  // Queue up the next draw request.
-  session.requestAnimationFrame(onXRFrame);
-
-  // Bind the graphics framebuffer to the baseLayer's framebuffer
-  gl.bindFramebuffer(gl.FRAMEBUFFER, session.renderState.baseLayer.framebuffer)
-
-  // Retrieve the pose of the device.
-  // XRFrame.getViewerPose can return null while the session attempts to establish tracking.
-  const pose = frame.getViewerPose(referenceSpace);
-  if (pose) {
-    // In mobile AR, we only have one view.
-    const view = pose.views[0];
-
-    const viewport = session.renderState.baseLayer.getViewport(view);
-    renderer.setSize(viewport.width, viewport.height)
-
-    // Use the view's transform matrix and projection matrix to configure the THREE.camera.
-    camera.matrix.fromArray(view.transform.matrix)
-    camera.projectionMatrix.fromArray(view.projectionMatrix);
-    camera.updateMatrixWorld(true);
-
-
-    const hitTestResults = frame.getHitTestResults(hitTestSource);
-if (hitTestResults.length > 0 && reticle) {
-  const hitPose = hitTestResults[0].getPose(referenceSpace);
-  reticle.visible = true;
-  reticle.position.set(hitPose.transform.position.x, hitPose.transform.position.y, hitPose.transform.position.z)
-  reticle.updateMatrixWorld(true);
-}
-
-
-    // Render the scene with THREE.WebGLRenderer.
-    renderer.render(scene, camera)
+    loader.load(
+      model.glbSrc,
+      function(gltf) {
+        if (currentModel) {
+          scene.remove(currentModel);
+        }
+        currentModel = gltf.scene;
+        currentModel.visible = false;
+        scene.add(currentModel);
+        document.getElementById("progress").style.display = "none";
+        document.getElementById("debug").textContent = "Debug: Model loaded successfully";
+      },
+      function(xhr) {
+        const percentComplete = (xhr.loaded / xhr.total * 100).toFixed(2);
+        document.getElementById("progress").textContent = `Loading: ${percentComplete}%`;
+      },
+      function(error) {
+        document.getElementById("debug").textContent = "Debug: Error loading model - " + error.message;
+      }
+    );
   }
-}
-session.requestAnimationFrame(onXRFrame);
 
+  function nextModel() {
+    currentModelIndex = (currentModelIndex + 1) % models.length;
+    loadModel(models[currentModelIndex]);
+  }
 
+  function previousModel() {
+    currentModelIndex = (currentModelIndex - 1 + models.length) % models.length;
+    loadModel(models[currentModelIndex]);
+  }
 
-}
+  // WebXR frame render function
+  const onXRFrame = (time, frame) => {
+    session.requestAnimationFrame(onXRFrame);
+
+    const pose = frame.getViewerPose(referenceSpace);
+    if (pose) {
+      const view = pose.views[0];
+      const viewport = session.renderState.baseLayer.getViewport(view);
+      renderer.setSize(viewport.width, viewport.height);
+
+      camera.matrix.fromArray(view.transform.matrix);
+      camera.projectionMatrix.fromArray(view.projectionMatrix);
+      camera.updateMatrixWorld(true);
+
+      const hitTestResults = frame.getHitTestResults(hitTestSource);
+      if (hitTestResults.length > 0) {
+        const hitPose = hitTestResults[0].getPose(referenceSpace);
+        reticle.visible = true;
+        reticle.position.set(hitPose.transform.position.x, hitPose.transform.position.y, hitPose.transform.position.z);
+        reticle.updateMatrixWorld(true);
+
+        if (currentModel) {
+          currentModel.visible = true;
+          currentModel.position.copy(reticle.position);
+          currentModel.updateMatrixWorld(true);
+        }
+      }
+
+      renderer.render(scene, camera);
+    }
+  };
+
+  // Start XR on button click
+  document.body.onload = () => {
+    activateXR();
+  };
 </script>
-
-
 
 </body>
 </html>
