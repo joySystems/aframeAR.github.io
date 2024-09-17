@@ -38,6 +38,37 @@
       z-index: 10;
     }
 
+    #controls {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      z-index: 10;
+    }
+
+    button {
+      padding: 10px;
+      background-color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    button:hover {
+      background-color: lightgray;
+    }
+
+    model-viewer {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      z-index: 1;
+    }
+
     #loading-progress {
       position: absolute;
       bottom: 50px;
@@ -65,105 +96,45 @@
       z-index: 10;
       display: none;
     }
-
-    .slider {
-      width: 100%;
-      text-align: center;
-      overflow: hidden;
-      position: absolute;
-      bottom: 16px;
-    }
-
-    .slides {
-      display: flex;
-      overflow-x: auto;
-      scroll-snap-type: x mandatory;
-      scroll-behavior: smooth;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .slide {
-      scroll-snap-align: start;
-      flex-shrink: 0;
-      width: 100px;
-      height: 100px;
-      background-size: contain;
-      background-repeat: no-repeat;
-      background-position: center;
-      background-color: #fff;
-      margin-right: 10px;
-      border-radius: 10px;
-      border: none;
-      display: flex;
-    }
-
-    .slide.selected {
-      border: 2px solid #4285f4;
-    }
-
-    .slide:focus {
-      outline: none;
-    }
-
-    .slide:focus-visible {
-      outline: 1px solid #4285f4;
-    }
-
-    model-viewer {
-      width: 100%;
-      height: 100%;
-      position: absolute;
-      z-index: 1;
-    }
   </style>
 </head>
 <body>
   <div id="ar-container">
+    <!-- AR Info Block -->
     <div id="info">
       <h1 id="model-name">Модель 1</h1>
       <p id="model-description">Описание модели 1</p>
     </div>
 
-    <model-viewer id="ar-viewer"
-      src="./obj/2222.glb"
-      poster="./obj/2222.webp"
-      shadow-intensity="1"
-      ar
+    <!-- Model Viewer for AR -->
+    <model-viewer id="ar-viewer" 
+      ar 
       ar-modes="webxr scene-viewer quick-look"
       camera-controls
       touch-action="pan-y"
+      src="./obj/2222.glb"
       alt="3D модель"
+      shadow-intensity="1"
       auto-rotate
       ar-placement="floor"
       environment-image="neutral"
-      ios-src="./obj/2222.usdz">
-      
-      <button slot="ar-button" id="ar-button">
-        View in your space
-      </button>
-
-      <div id="ar-prompt">
-        <img src="../../assets/hand.png">
-      </div>
-
-      <button id="ar-failure">
-        AR is not tracking!
-      </button>
-
+      ios-src="./obj/2222.usdz"
+      on-load="handleLoad()"
+      on-error="handleError(event)">
     </model-viewer>
 
-    <div class="slider">
-      <div class="slides">
-        <button class="slide selected" onclick="switchSrc(this, '2222')" style="background-image: url('./obj/2222.webp');"></button>
-        <button class="slide" onclick="switchSrc(this, '444')" style="background-image: url('./obj/444.webp');"></button>
-        <button class="slide" onclick="switchSrc(this, '4441')" style="background-image: url('./obj/4441.webp');"></button>
-      </div>
+    <!-- Controls -->
+    <div id="controls">
+      <button id="prev-model">⬅️</button>
+      <button id="next-model">➡️</button>
     </div>
 
+    <!-- Loading progress -->
     <div id="loading-progress">Загрузка: 0%</div>
+
+    <!-- Debug info -->
     <div id="debug">Ошибка: </div>
   </div>
-
 
 <script>
 const models = [
@@ -171,61 +142,72 @@ const models = [
     name: 'Модель 1',
     description: 'Описание модели 1',
     glbSrc: './obj/2222.glb',
-    usdzSrc: './obj/2222.usdz',
-    posterSrc: './obj/2222.webp'
+    usdzSrc: './obj/2222.usdz'
   },
   {
     name: 'Модель 2',
     description: 'Описание модели 2',
     glbSrc: './obj/444.glb',
-    usdzSrc: './obj/444.usdz',
-    posterSrc: './obj/444.webp'
+    usdzSrc: './obj/444.usdz'
   },
   {
     name: 'Модель 3',
     description: 'Описание модели 3',
     glbSrc: './obj/4441.glb',
-    usdzSrc: './obj/4441.usdz',
-    posterSrc: './obj/4441.webp'
+    usdzSrc: './obj/4441.usdz'
   }
 ];
 
-const modelViewer = document.querySelector("#ar-viewer");
-const modelName = document.querySelector("#model-name");
-const modelDescription = document.querySelector("#model-description");
-const loadingProgress = document.querySelector("#loading-progress");
-const debugInfo = document.querySelector("#debug");
+let currentIndex = 0;
+const modelViewer = document.querySelector('#ar-viewer');
+const modelName = document.querySelector('#model-name');
+const modelDescription = document.querySelector('#model-description');
+const loadingProgress = document.querySelector('#loading-progress');
+const debugInfo = document.querySelector('#debug');
 
-window.switchSrc = (element, modelNameKey) => {
-  const selectedModel = models.find(model => model.glbSrc.includes(modelNameKey));
-  
-  modelViewer.src = selectedModel.glbSrc;
-  modelViewer.poster = selectedModel.posterSrc;
-  modelViewer.setAttribute('ios-src', selectedModel.usdzSrc);
-  
-  modelName.textContent = selectedModel.name;
-  modelDescription.textContent = selectedModel.description;
-  
-  const slides = document.querySelectorAll(".slide");
-  slides.forEach((slide) => { slide.classList.remove("selected"); });
-  element.classList.add("selected");
-};
+// Обновление информации и модели
+function updateModel() {
+  loadingProgress.style.display = 'block';
+  debugInfo.style.display = 'none';
+  modelName.textContent = models[currentIndex].name;
+  modelDescription.textContent = models[currentIndex].description;
+  modelViewer.setAttribute('src', models[currentIndex].glbSrc);
+  modelViewer.setAttribute('ios-src', models[currentIndex].usdzSrc);
+}
 
-// Загрузка прогресса
+// Кнопка "влево"
+document.querySelector('#prev-model').addEventListener('click', () => {
+  currentIndex = (currentIndex - 1 + models.length) % models.length;
+  updateModel();
+});
+
+// Кнопка "вправо"
+document.querySelector('#next-model').addEventListener('click', () => {
+  currentIndex = (currentIndex + 1) % models.length;
+  updateModel();
+});
+
+// Отслеживание процесса загрузки
 modelViewer.addEventListener('progress', (event) => {
   const progress = Math.round(event.detail.totalProgress * 100);
   loadingProgress.textContent = `Загрузка: ${progress}%`;
-  loadingProgress.style.display = 'block';
 });
 
+// Когда модель загружена
 modelViewer.addEventListener('load', () => {
   loadingProgress.style.display = 'none';
 });
 
+// Обработка ошибок
 modelViewer.addEventListener('error', (event) => {
-  debugInfo.textContent = `Ошибка: ${event.detail.message}`;
   debugInfo.style.display = 'block';
+  debugInfo.textContent = `Ошибка: ${event.detail.message}`;
+  loadingProgress.style.display = 'none';
 });
+
+// Инициализация первой модели
+updateModel();
+
 
 </script>
 </body>
